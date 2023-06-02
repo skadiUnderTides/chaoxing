@@ -13,7 +13,7 @@ import requests
 from requests.utils import dict_from_cookiejar
 
 from utils.functions import Logger
-from utils.functions import pretty_print, sort_missions, get_enc_time, show_progress, save_users
+from utils.functions import pretty_print, sort_missions, show_progress, get_enc_time, save_users
 
 
 class Chaoxing:
@@ -27,6 +27,8 @@ class Chaoxing:
         self.cookies = None
         self.courses = None
         self.selected_course = None
+        self.selected_course_index_list = None
+        self.selected_course_index_now = None
         self.missions = None
         self.speed = None
 
@@ -143,7 +145,25 @@ class Chaoxing:
         self.logger.debug(self.selected_course)
         self.logger.debug("---selected_course info end---")
         return True
-
+    
+    def select_course_multi(self):
+        pretty_print(self.courses)
+        index = input("请输入您要学习的课程序号，空格分隔：")
+        self.selected_course_index_list = [int(i)-1 for i in index.split(' ')]
+        self.selected_course_index_now = 0
+        self.logger.debug("---selected_course info begin---")
+        for i in self.selected_course_index_list:
+            self.logger.debug(self.courses[i])
+        self.logger.debug("---selected_course info end---")
+        return True
+    
+    def next_selected_course(self):
+        if (self.selected_course_index_now >= len(self.selected_course_index_list)):
+            return False
+        self.selected_course = self.courses[self.selected_course_index_list[self.selected_course_index_now]]
+        self.selected_course_index_now += 1
+        return True
+        
     def get_selected_course_data(self):
         url = 'https://mooc1-api.chaoxing.com/gas/clazz'
         params = {
@@ -300,12 +320,12 @@ class Chaoxing:
         playingTime = 0
         print("当前播放速率：" + str(speed) + "倍速")
         while True:
-            if sec >= 58:
+            if sec >= 58 or playingTime > video_duration:
                 sec = 0
                 res = self.main_pass_video(cpi, dtoken, otherInfo, playingTime,
                                            clazzid, video_duration, jobid,
                                            objectid, userid, dtype, _tsp)
-                print(res)
+#               print(res)
                 if res.get('isPassed'):
                     show_progress(name, video_duration, video_duration)
                     break

@@ -104,7 +104,6 @@ class Logger:
     def critical(self, message):
         self.logger.critical(message)
 
-
 def save_users(usernm, passwd):
     user_folder = f"saves/{usernm}"
     check_path(user_folder, file=False)
@@ -212,17 +211,26 @@ def sec2time(sec):
         ret = "0s"
     return ret
 
+def len_halfwidth(s):
+        return sum([2 if ord(i) > 128 else 1 for i in s]) # 计算字符串半角长度
 
 def show_progress(name, current, total):
-    percent = int(current / total * 100)
+    columns = os.get_terminal_size().columns
+    percent = min(int(current / total * 100),100)
     length = int(percent * 40 // 100)
     progress = ("#" * length).ljust(40, " ")
     remain = (total - current)
     if current >= total and remain < 1:
-        print("\r" + f"当前任务： {name} 已完成".ljust(100, " "))
+        output = f"当前任务： {name} 已完成"
+        print("\r" + output.ljust(columns - (len_halfwidth(output) - len(output)), ' '))
     else:
-        # print("\r" + f"当前任务： {name} 剩余时间：{sec2time(remain / speed)} |{progress}| {percent}%  {sec2time(current)}/{sec2time(total)}", end="", flush=True)
-        print("\r" + f"当前任务： {name} |{progress}| {percent}%  {sec2time(current)}/{sec2time(total)}     ", end="", flush=True)
+        output = f"当前任务： {name} |{progress}| {percent}%  {sec2time(min(current,total))}/{sec2time(total)}"
+        showlength = len_halfwidth(output)
+        if showlength > columns:
+            name = name[0:min(0,-(showlength-columns+3))]+"..."
+            output = f"当前任务： {name} |{progress}| {percent}%  {sec2time(min(current,total))}/{sec2time(total)}"
+        print("\r" + output.ljust(columns - (len_halfwidth(output) - len(output)), ' '), end="", flush=True)
+
 
 
 def pause(start: int, end: int):
